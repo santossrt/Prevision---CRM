@@ -1,0 +1,92 @@
+{
+  "name": "prevision",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24.12.0 <25"
+  },
+  "scripts": {
+    "dev": "next dev --hostname 127.0.0.1",
+    "build": "prisma generate && next build",
+    "start": "next start --hostname 127.0.0.1",
+    "typecheck": "prisma generate && next typegen && tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "db:generate": "prisma generate",
+    "db:validate": "prisma validate",
+    "db:status": "node scripts/database/migrate.ts status",
+    "db:migrate": "node scripts/database/migrate.ts dev",
+    "db:deploy": "node scripts/database/migrate.ts deploy",
+    "db:identify": "node --conditions=react-server scripts/database/identify.ts",
+    "db:check": "node --conditions=react-server scripts/database/check.ts",
+    "db:up": "docker compose up -d --wait db",
+    "db:down": "docker compose stop db",
+    "env:setup": "node scripts/setup-local-env.mjs",
+    "auth:setup": "node scripts/setup-auth-env.mjs",
+    "auth:google": "node scripts/setup-google-oauth.ts",
+    "auth:bootstrap": "node --conditions=react-server scripts/database/bootstrap-admin.ts",
+    "mail:read": "node scripts/read-local-mail.mjs",
+    "check:integration": "node --conditions=react-server scripts/database/integration.ts",
+    "check:auth": "node --conditions=react-server scripts/database/auth-integration.ts",
+    "check:catalog": "node --conditions=react-server scripts/database/catalog-integration.ts",
+    "check:stock": "node --conditions=react-server scripts/database/stock-integration.ts",
+    "check:stock-tools": "node --conditions=react-server scripts/database/stock-tools-integration.ts",
+    "check:inventory": "node --conditions=react-server scripts/database/inventory-integration.ts",
+    "check:audit": "node --conditions=react-server scripts/database/audit-integration.ts",
+    "check:transfers-import": "node --conditions=react-server scripts/database/transfers-import-integration.ts",
+    "check:transfers-export": "node --conditions=react-server scripts/database/transfers-export-integration.ts",
+    "check:notifications": "node --conditions=react-server scripts/database/notifications-integration.ts",
+    "check:dashboard": "node --conditions=react-server scripts/database/dashboard-integration.ts",
+    "check:analyses": "node --conditions=react-server scripts/database/analyses-integration.ts",
+    "check:recovery": "node --conditions=react-server scripts/database/recovery-integration.ts",
+    "check:transfer-retention": "node --conditions=react-server scripts/database/transfer-retention-integration.ts",
+    "check:security": "node --conditions=react-server scripts/database/security-integration.ts",
+    "maintenance:transfers": "node --conditions=react-server scripts/database/purge-transfer-payloads.ts",
+    "mail:process": "node --conditions=react-server scripts/database/process-reset-jobs.ts",
+    "db:local:up": "node scripts/database/local-postgres.mjs up",
+    "db:local:down": "node scripts/database/local-postgres.mjs down"
+  },
+  "dependencies": {
+    "@auth/prisma-adapter": "2.11.3",
+    "@prisma/adapter-pg": "7.10.1",
+    "@prisma/client": "7.10.1",
+    "dotenv": "18.0.9",
+    "exceljs": "4.4.0",
+    "next": "16.4.3",
+    "next-auth": "5.0.0-beta.32",
+    "nodemailer-smtp": "npm:nodemailer@10.3.1",
+    "pdfmake": "0.3.13",
+    "pg": "8.23.1",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "server-only": "0.0.1",
+    "yauzl": "3.4.0",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "4.3.3",
+    "@types/node": "24.19.2",
+    "@types/nodemailer": "8.0.2",
+    "@types/pg": "8.23.1",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@types/yauzl": "3.4.0",
+    "postcss": "8.5.32",
+    "prisma": "7.10.1",
+    "tailwindcss": "4.3.3",
+    "typescript": "5.9.3",
+    "vite": "8.3.5",
+    "vitest": "5.0.5"
+  },
+  "overrides": {
+    "exceljs": {
+      "uuid": "11.1.1"
+    }
+  },
+  "allowScripts": {
+    "prisma@7.10.1": true,
+    "@prisma/engines@7.10.1": true,
+    "esbuild@0.28.2": true
+  }
+}

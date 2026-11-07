@@ -1,0 +1,628 @@
+generator client {
+  provider            = "prisma-client"
+  output              = "../src/generated/prisma"
+  moduleFormat        = "esm"
+  importFileExtension = "ts"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// SQL CHECK constraints and append-only guards are added to the migration;
+// Prisma's schema language does not represent those database guarantees.
+
+enum RoleCode {
+  ADMINISTRATOR
+  MANAGER
+  OPERATOR
+}
+
+enum AccessTokenPurpose {
+  PASSWORD_SETUP
+  PASSWORD_RESET
+  GOOGLE_LINK
+  ADMIN_PASSWORD_RESET
+}
+
+enum StockMovementType {
+  ENTRY
+  EXIT
+  POSITIVE_ADJUSTMENT
+  NEGATIVE_ADJUSTMENT
+  COMPENSATION
+}
+
+enum StockAlertKind {
+  EMPTY
+  LOW
+}
+
+enum InventoryStatus {
+  OPEN
+  COMPLETED
+  CANCELED
+}
+
+enum InventoryOperationKind {
+  CREATE
+  COUNT
+  REBASE
+  COMPLETE
+  CANCEL
+}
+
+enum ProductValueType {
+  ACQUISITION_COST
+  SALE_PRICE
+}
+
+enum ProductImportStatus {
+  PREVIEW
+  COMPLETED
+}
+
+enum NotificationKind {
+  STOCK_LOW
+  STOCK_EMPTY
+  STOCK_MOVEMENT
+  INVENTORY_COMPLETED
+  INVENTORY_DIVERGENCE
+  ADMIN_NOTICE
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  ACTIVATE
+  DEACTIVATE
+  DELETE
+  LOGIN_SUCCESS
+  LOGIN_FAILURE
+  LOGOUT
+  PASSWORD_SETUP
+  PASSWORD_RESET
+  PERMISSIONS_CHANGED
+  STOCK_ENTRY
+  STOCK_EXIT
+  STOCK_ADJUSTMENT
+  STOCK_COMPENSATION
+  IMPORT
+  EXPORT
+}
+
+enum AuditModule {
+  AUTH
+  USERS
+  PERMISSIONS
+  CATEGORIES
+  SUPPLIERS
+  CUSTOMERS
+  PRODUCTS
+  STOCK
+  SYSTEM
+  INVENTORY
+  TRANSFERS
+}
+
+// Written once by the environment's migration/bootstrap and checked before
+// administrative database operations. It must not be copied across databases.
+model EnvironmentSentinel {
+  id          String   @id
+  environment String
+  databaseId  String   @unique @map("database_id")
+  createdAt   DateTime @default(now()) @db.Timestamptz(3)
+
+  @@map("environment_sentinel")
+}
+
+model User {
+  id             String    @id @default(uuid()) @db.Uuid
+  name           String?   @db.VarChar(160)
+  email          String    @unique @db.VarChar(254)
+  emailVerified  DateTime? @map("email_verified") @db.Timestamptz(6)
+  image          String?   @db.Text
+  passwordHash   String?   @map("password_hash") @db.Text
+  googleAccessAllowed Boolean @default(false) @map("google_access_allowed")
+  isActive       Boolean   @default(true) @map("is_active")
+  sessionVersion Int       @default(0) @map("session_version")
+  roleId         String    @map("role_id") @db.Uuid
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  role                Role                  @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  accounts            Account[]
+  loginSessions       LoginSession[]
+  accessTokens        AccessToken[]
+  stockMovements      StockMovement[]
+  productValueHistory ProductValueHistory[]
+  auditEvents         AuditEvent[]
+  inventoriesCreated  Inventory[] @relation("InventoryCreatedBy")
+  inventoriesCompleted Inventory[] @relation("InventoryCompletedBy")
+  inventoriesCanceled Inventory[] @relation("InventoryCanceledBy")
+  inventoryCounts     InventoryItem[]
+  inventoryOperations InventoryOperation[]
+  productImports       ProductImport[]
+  reportExports        ReportExport[]
+  notificationsCreated Notification[]
+  notificationReads    NotificationRead[]
+  preference           UserPreference?
+
+  @@index([roleId])
+  @@index([isActive])
+  @@map("users")
+}
+
+model Role {
+  id        String   @id @default(uuid()) @db.Uuid
+  code      RoleCode @unique
+  name      String   @db.VarChar(80)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  users       User[]
+  permissions RolePermission[]
+
+  @@map("roles")
+}
+
+model Permission {
+  id          String   @id @default(uuid()) @db.Uuid
+  code        String   @unique @db.VarChar(100)
+  description String?  @db.VarChar(255)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  roles RolePermission[]
+
+  @@map("permissions")
+}
+
+model RolePermission {
+  roleId       String   @map("role_id") @db.Uuid
+  permissionId String   @map("permission_id") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@index([permissionId])
+  @@map("role_permissions")
+}
+
+// Canonical Auth.js adapter field names are intentionally preserved.
+// OAuth secrets must never be copied into audit events or client responses.
+model Account {
+  id                String  @id @default(uuid()) @db.Uuid
+  userId            String  @map("user_id") @db.Uuid
+  type              String  @db.VarChar(32)
+  provider          String  @db.VarChar(80)
+  providerAccountId String  @map("provider_account_id") @db.VarChar(255)
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String? @db.VarChar(80)
+  scope             String? @db.Text
+  id_token          String? @db.Text
+  session_state     String? @db.Text
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@unique([userId, provider])
+  @@index([userId])
+  @@map("auth_accounts")
+}
+
+// Application-managed revocation registry for JWT sessions. This is not the
+// Auth.js database-session model and stores no raw cookie or bearer token.
+model LoginSession {
+  id             String    @id @default(uuid()) @db.Uuid
+  userId         String    @map("user_id") @db.Uuid
+  sessionVersion Int       @map("session_version")
+  expiresAt      DateTime  @map("expires_at") @db.Timestamptz(6)
+  revokedAt      DateTime? @map("revoked_at") @db.Timestamptz(6)
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  lastSeenAt     DateTime? @map("last_seen_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, revokedAt])
+  @@index([expiresAt])
+  @@map("login_sessions")
+}
+
+model AccessToken {
+  id        String             @id @default(uuid()) @db.Uuid
+  userId    String             @map("user_id") @db.Uuid
+  tokenHash String             @unique @map("token_hash") @db.Char(64)
+  purpose   AccessTokenPurpose
+  expiresAt DateTime           @map("expires_at") @db.Timestamptz(6)
+  usedAt    DateTime?          @map("used_at") @db.Timestamptz(6)
+  revokedAt DateTime?          @map("revoked_at") @db.Timestamptz(6)
+  createdAt DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, purpose])
+  @@index([expiresAt])
+  @@map("access_tokens")
+}
+
+// HMAC keys contain neither raw addresses nor email/IP identifiers.
+// expiresAt controls logical TTL; expired buckets can be removed in maintenance.
+model RateLimitBucket {
+  key         String   @id @db.Char(64)
+  windowStart DateTime @map("window_start") @db.Timestamptz(6)
+  count       Int      @default(0)
+  expiresAt   DateTime @map("expires_at") @db.Timestamptz(6)
+
+  @@index([expiresAt])
+  @@map("rate_limit_buckets")
+}
+
+// A short-lived, encrypted request independent of account eligibility. Public
+// responses never await account lookup or SMTP. Terminal jobs have no payload.
+// Partial indexes and transition checks are maintained by the SQL migration.
+model PasswordResetJob {
+  id          String    @id @default(uuid()) @db.Uuid
+  payload     String?   @db.Text
+  status      String    @default("PENDING") @db.VarChar(12)
+  attempts    Int       @default(0)
+  availableAt DateTime  @default(dbgenerated("clock_timestamp()")) @map("available_at") @db.Timestamptz(6)
+  expiresAt   DateTime  @map("expires_at") @db.Timestamptz(6)
+  lockedBy    String?   @map("locked_by") @db.Uuid
+  leaseUntil  DateTime? @map("lease_until") @db.Timestamptz(6)
+  processedAt DateTime? @map("processed_at") @db.Timestamptz(6)
+  createdAt   DateTime  @default(dbgenerated("clock_timestamp()")) @map("created_at") @db.Timestamptz(6)
+
+  @@map("password_reset_jobs")
+}
+
+model Category {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String   @unique @db.VarChar(100)
+  description String?  @db.Text
+  isActive    Boolean  @default(true) @map("is_active")
+  version     Int      @default(0)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  products Product[]
+
+  @@map("categories")
+}
+
+model Supplier {
+  id                        String   @id @default(uuid()) @db.Uuid
+  name                      String   @db.VarChar(160)
+  taxId                     String?  @unique @map("tax_id") @db.VarChar(32)
+  email                     String?  @db.VarChar(254)
+  phone                     String?  @db.VarChar(32)
+  address                   String?  @db.Text
+  replenishmentLeadTimeDays Int?     @map("replenishment_lead_time_days")
+  isActive                  Boolean  @default(true) @map("is_active")
+  version                   Int      @default(0)
+  createdAt                 DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                 DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  defaultProducts Product[]
+  stockMovements  StockMovement[]
+
+  @@index([name])
+  @@map("suppliers")
+}
+
+model Customer {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String   @db.VarChar(160)
+  taxId     String?  @unique @map("tax_id") @db.VarChar(32)
+  email     String?  @db.VarChar(254)
+  phone     String?  @db.VarChar(32)
+  address   String?  @db.Text
+  isActive  Boolean  @default(true) @map("is_active")
+  version   Int      @default(0)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  stockMovements StockMovement[]
+
+  @@index([name])
+  @@map("customers")
+}
+
+model Product {
+  id                        String   @id @default(uuid()) @db.Uuid
+  sku                       String   @unique @db.VarChar(64)
+  barcode                   String?  @unique @db.VarChar(128)
+  name                      String   @db.VarChar(160)
+  description               String?  @db.Text
+  categoryId                String   @map("category_id") @db.Uuid
+  defaultSupplierId         String?  @map("default_supplier_id") @db.Uuid
+  unitOfMeasure             String   @default("UN") @map("unit_of_measure") @db.VarChar(20)
+  minimumStock              Decimal  @default(0) @map("minimum_stock") @db.Decimal(18, 4)
+  acquisitionCost           Decimal  @default(0) @map("acquisition_cost") @db.Decimal(18, 4)
+  salePrice                 Decimal  @default(0) @map("sale_price") @db.Decimal(18, 4)
+  replenishmentLeadTimeDays Int?     @map("replenishment_lead_time_days")
+  safetyStock               Decimal  @default(0) @map("safety_stock") @db.Decimal(18, 4)
+  isActive                  Boolean  @default(true) @map("is_active")
+  version                   Int      @default(0)
+  createdAt                 DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                 DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  category        Category              @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  defaultSupplier Supplier?             @relation(fields: [defaultSupplierId], references: [id], onDelete: Restrict)
+  stockBalance    StockBalance?
+  stockAlert      StockAlert?
+  stockMovements  StockMovement[]
+  valueHistory    ProductValueHistory[]
+  inventoryItems  InventoryItem[]
+
+  @@index([categoryId])
+  @@index([defaultSupplierId])
+  @@index([isActive, name])
+  @@map("products")
+}
+
+// The primary key also enforces exactly one balance per product at most.
+// Product creation must create its zero balance in the same transaction.
+model StockBalance {
+  productId String   @id @map("product_id") @db.Uuid
+  quantity  Decimal  @default(0) @db.Decimal(18, 4)
+  version   Int      @default(0)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@map("stock_balances")
+}
+
+// One current condition per product. Database triggers resolve and reopen this
+// row instead of adding a notification for every movement below the minimum.
+model StockAlert {
+  productId  String         @id @map("product_id") @db.Uuid
+  kind       StockAlertKind
+  openedAt   DateTime       @default(now()) @map("opened_at") @db.Timestamptz(6)
+  changedAt  DateTime       @default(now()) @map("changed_at") @db.Timestamptz(6)
+  resolvedAt DateTime?      @map("resolved_at") @db.Timestamptz(6)
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([resolvedAt, kind, changedAt])
+  @@map("stock_alerts")
+}
+
+// Every persisted movement is confirmed and immutable. Corrections create
+// a new COMPENSATION linked to the original; totals represent absolute values.
+model StockMovement {
+  id                    String            @id @default(uuid()) @db.Uuid
+  productId             String            @map("product_id") @db.Uuid
+  type                  StockMovementType
+  quantityDelta         Decimal           @map("quantity_delta") @db.Decimal(18, 4)
+  quantityBefore        Decimal           @map("quantity_before") @db.Decimal(18, 4)
+  quantityAfter         Decimal           @map("quantity_after") @db.Decimal(18, 4)
+  historicalUnitCost    Decimal           @map("historical_unit_cost") @db.Decimal(18, 4)
+  historicalTotalCost   Decimal           @map("historical_total_cost") @db.Decimal(18, 2)
+  historicalUnitPrice   Decimal?          @map("historical_unit_price") @db.Decimal(18, 4)
+  historicalTotalPrice  Decimal?          @map("historical_total_price") @db.Decimal(18, 2)
+  supplierId            String?           @map("supplier_id") @db.Uuid
+  customerId            String?           @map("customer_id") @db.Uuid
+  performedById         String            @map("performed_by_id") @db.Uuid
+  occurredAt            DateTime          @default(now()) @map("occurred_at") @db.Timestamptz(6)
+  createdAt             DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  notes                 String?           @db.Text
+  justification         String?           @db.Text
+  operationId           String            @default(uuid()) @map("operation_id") @db.Uuid
+  idempotencyKey        String            @unique @map("idempotency_key") @db.VarChar(128)
+  requestHash           String?           @map("request_hash") @db.VarChar(64)
+  compensatesMovementId String?           @unique @map("compensates_movement_id") @db.Uuid
+
+  product             Product        @relation(fields: [productId], references: [id], onDelete: Restrict)
+  supplier            Supplier?      @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  customer            Customer?      @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  performedBy         User           @relation(fields: [performedById], references: [id], onDelete: Restrict)
+  compensatesMovement StockMovement? @relation("StockMovementCompensation", fields: [compensatesMovementId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  compensation        StockMovement? @relation("StockMovementCompensation")
+  inventoryItem       InventoryItem?
+
+  @@index([productId, occurredAt])
+  @@index([productId, createdAt])
+  @@index([performedById, occurredAt])
+  @@index([type, occurredAt])
+  @@index([supplierId])
+  @@index([customerId])
+  @@index([operationId])
+  @@map("stock_movements")
+}
+
+model Inventory {
+  id            String @id @default(uuid()) @db.Uuid
+  title         String @db.VarChar(160)
+  notes         String? @db.Text
+  status        InventoryStatus @default(OPEN)
+  version       Int @default(0)
+  openedAt      DateTime @default(now()) @map("opened_at") @db.Timestamptz(6)
+  completedAt   DateTime? @map("completed_at") @db.Timestamptz(6)
+  canceledAt    DateTime? @map("canceled_at") @db.Timestamptz(6)
+  createdById   String @map("created_by_id") @db.Uuid
+  completedById String? @map("completed_by_id") @db.Uuid
+  canceledById  String? @map("canceled_by_id") @db.Uuid
+
+  createdBy     User @relation("InventoryCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  completedBy   User? @relation("InventoryCompletedBy", fields: [completedById], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  canceledBy    User? @relation("InventoryCanceledBy", fields: [canceledById], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  items         InventoryItem[]
+  operations    InventoryOperation[]
+
+  @@index([status, openedAt])
+  @@index([createdById, openedAt])
+  @@map("inventories")
+}
+
+model InventoryItem {
+  inventoryId      String @map("inventory_id") @db.Uuid
+  productId        String @map("product_id") @db.Uuid
+  name             String @db.VarChar(160)
+  sku              String @db.VarChar(64)
+  unitOfMeasure    String @map("unit_of_measure") @db.VarChar(20)
+  categoryName     String @map("category_name") @db.VarChar(100)
+  baselineQuantity Decimal @map("baseline_quantity") @db.Decimal(18,4)
+  baselineVersion  Int @map("baseline_version")
+  countedQuantity  Decimal? @map("counted_quantity") @db.Decimal(18,4)
+  justification    String? @db.VarChar(600)
+  countedById      String? @map("counted_by_id") @db.Uuid
+  countedAt        DateTime? @map("counted_at") @db.Timestamptz(6)
+  movementId       String? @unique @map("movement_id") @db.Uuid
+
+  inventory Inventory @relation(fields: [inventoryId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  product   Product @relation(fields: [productId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  countedBy User? @relation(fields: [countedById], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  movement  StockMovement? @relation(fields: [movementId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+
+  @@id([inventoryId, productId])
+  @@index([productId])
+  @@index([countedById])
+  @@map("inventory_items")
+}
+
+model InventoryOperation {
+  key         String @id @db.Uuid
+  inventoryId String @map("inventory_id") @db.Uuid
+  actorId     String @map("actor_id") @db.Uuid
+  kind        InventoryOperationKind
+  requestHash String @map("request_hash") @db.VarChar(64)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  inventory Inventory @relation(fields: [inventoryId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  actor     User @relation(fields: [actorId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+
+  @@index([inventoryId, createdAt])
+  @@index([actorId])
+  @@map("inventory_operations")
+}
+
+model ProductImport {
+  id              String @id @default(uuid()) @db.Uuid
+  ownerId         String @map("owner_id") @db.Uuid
+  fileName        String @map("file_name") @db.VarChar(180)
+  format          String @db.VarChar(8)
+  dataHash        String @map("data_hash") @db.VarChar(64)
+  status          ProductImportStatus @default(PREVIEW)
+  payload         Json
+  rowCount        Int @map("row_count")
+  errorCount      Int @map("error_count")
+  createdCount    Int @default(0) @map("created_count")
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  expiresAt       DateTime @map("expires_at") @db.Timestamptz(6)
+  completedAt     DateTime? @map("completed_at") @db.Timestamptz(6)
+  confirmationKey String? @unique @map("confirmation_key") @db.Uuid
+  operationId     String @default(uuid()) @map("operation_id") @db.Uuid
+
+  owner User @relation(fields: [ownerId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  @@index([ownerId, createdAt])
+  @@index([ownerId, dataHash, status])
+  @@map("product_imports")
+}
+
+model ReportExport {
+  id          String @id @default(uuid()) @db.Uuid
+  ownerId     String @map("owner_id") @db.Uuid
+  kind        String @db.VarChar(30)
+  payload     Json
+  rowCount    Int @map("row_count")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  expiresAt   DateTime @map("expires_at") @db.Timestamptz(6)
+  operationId String @default(uuid()) @map("operation_id") @db.Uuid
+
+  owner User @relation(fields: [ownerId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  @@index([ownerId, createdAt])
+  @@map("report_exports")
+}
+
+// Shared immutable events; visibility is checked against the user's current
+// source permission. Reading an event is private to each user.
+model Notification {
+  id                 String @id @default(uuid()) @db.Uuid
+  kind               NotificationKind
+  title              String @db.VarChar(120)
+  message            String @db.VarChar(2000)
+  eventKey           String @unique @map("event_key") @db.VarChar(200)
+  entityType         String? @map("entity_type") @db.VarChar(32)
+  entityId           String? @map("entity_id") @db.Uuid
+  requiredPermission String? @map("required_permission") @db.VarChar(100)
+  actorId            String? @map("actor_id") @db.Uuid
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  actor User? @relation(fields: [actorId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  reads NotificationRead[]
+  @@index([requiredPermission, createdAt])
+  @@index([kind, createdAt])
+  @@map("notifications")
+}
+
+model NotificationRead {
+  notificationId String @map("notification_id") @db.Uuid
+  userId         String @map("user_id") @db.Uuid
+  readAt         DateTime @default(now()) @map("read_at") @db.Timestamptz(6)
+
+  notification Notification @relation(fields: [notificationId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  @@id([notificationId, userId])
+  @@index([userId, readAt])
+  @@map("notification_reads")
+}
+
+model UserPreference {
+  userId    String @id @map("user_id") @db.Uuid
+  theme     String @default("system") @db.VarChar(10)
+  version   Int @default(0)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  @@map("user_preferences")
+}
+
+model ProductValueHistory {
+  id            String           @id @default(uuid()) @db.Uuid
+  productId     String           @map("product_id") @db.Uuid
+  type          ProductValueType
+  previousValue Decimal?         @map("previous_value") @db.Decimal(18, 4)
+  newValue      Decimal          @map("new_value") @db.Decimal(18, 4)
+  changedById   String           @map("changed_by_id") @db.Uuid
+  effectiveAt   DateTime         @default(dbgenerated("clock_timestamp()")) @map("effective_at") @db.Timestamptz(6)
+  createdAt     DateTime         @default(dbgenerated("clock_timestamp()")) @map("created_at") @db.Timestamptz(6)
+  operationId   String           @default(uuid()) @map("operation_id") @db.Uuid
+
+  product   Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+  changedBy User    @relation(fields: [changedById], references: [id], onDelete: Restrict)
+
+  @@index([productId, type, effectiveAt])
+  @@index([productId, type, effectiveAt, createdAt, id], map: "product_value_history_timeline_idx")
+  @@index([changedById])
+  @@index([operationId])
+  @@map("product_value_history")
+}
+
+// JSON fields must use an explicit allowlist, excluding credentials and tokens.
+// A nullable actor supports authentication failures with no identified user.
+model AuditEvent {
+  id             String      @id @default(uuid()) @db.Uuid
+  actorId        String?     @map("actor_id") @db.Uuid
+  action         AuditAction
+  module         AuditModule
+  entityType     String      @map("entity_type") @db.VarChar(80)
+  entityId       String?     @map("entity_id") @db.VarChar(128)
+  previousValues Json?       @map("previous_values")
+  newValues      Json?       @map("new_values")
+  origin         String?     @db.VarChar(255)
+  operationId    String      @default(uuid()) @map("operation_id") @db.Uuid
+  createdAt      DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  actor User? @relation(fields: [actorId], references: [id], onDelete: Restrict)
+
+  @@index([actorId, createdAt])
+  @@index([module, createdAt])
+  @@index([entityType, entityId])
+  @@index([operationId])
+  @@map("audit_events")
+}

@@ -1,0 +1,141 @@
+/* The selected mode is rendered on <html>. System mode reacts to the media
+   query without JavaScript, including while the application is loading. */
+:root {
+  color-scheme: light;
+  --surface-soft: #f4f7ef; --surface-hover: #edf3e7; --field: #fff;
+  --title: #2d4435; --text: #526b44; --link: #39704a;
+  --positive: #52783f; --warning: #826825; --warning-bg: #fcf7e9; --warning-line: #e7dabc;
+  --danger: #963f36; --danger-bg: #fff4f1; --danger-line: #e9ceca;
+  --success-bg: #eef6e8; --success-line: #cddfc2;
+  --primary: #306946; --primary-hover: #265a3a; --on-primary: #fff;
+  --soft-border: #dfe7d5; --focus: #4d9c78; --scrim: #14221888;
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --canvas: #122019; --surface: #1b2b23; --ink: #e4eddf; --muted: #afbea5; --line: #3a4d3d;
+  --surface-soft: #22362a; --surface-hover: #2b4231; --field: #17281f;
+  --title: #edf5e7; --text: #ccdac0; --link: #b5d997; --jade: #b5d997;
+  --positive: #aad28c; --warning: #edcf87; --warning-bg: #3b3320; --warning-line: #756540;
+  --danger: #ffb7a9; --danger-bg: #3b2522; --danger-line: #82574d;
+  --success-bg: #263c27; --success-line: #526b42;
+  --primary: #b3d591; --primary-hover: #c2e4a0; --on-primary: #1d321e;
+  --soft-border: #455b46; --focus: #9dccad; --scrim: #070d09b3;
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-theme="system"] {
+    color-scheme: dark;
+    --canvas: #122019; --surface: #1b2b23; --ink: #e4eddf; --muted: #afbea5; --line: #3a4d3d;
+    --surface-soft: #22362a; --surface-hover: #2b4231; --field: #17281f;
+    --title: #edf5e7; --text: #ccdac0; --link: #b5d997; --jade: #b5d997;
+    --positive: #aad28c; --warning: #edcf87; --warning-bg: #3b3320; --warning-line: #756540;
+    --danger: #ffb7a9; --danger-bg: #3b2522; --danger-line: #82574d;
+    --success-bg: #263c27; --success-line: #526b42;
+    --primary: #b3d591; --primary-hover: #c2e4a0; --on-primary: #1d321e;
+    --soft-border: #455b46; --focus: #9dccad; --scrim: #070d09b3;
+  }
+}
+
+/* Shared surfaces, text and controls. These selectors also cover dialogs in
+   the top layer, outside the main content's visual stacking context. */
+:root[data-theme] :is(.access-shell, .workspace-body) { background: var(--canvas); color: var(--ink); }
+:root[data-theme] :is(.topbar, .management-panel, .module-card, .workspace-message, .catalog-history, .user-dialog, .catalog-dialog, .skip-link) { background: var(--surface); color: var(--ink); border-color: var(--line); }
+:root[data-theme] :is(.topbar, .page-footer, .panel-heading, .catalog-pagination, .table-scroll, .profile-note, .profile-data > div, .catalog-details > div, .catalog-table td, .users-table td, .users-table th, .audit-values .audit-values, .stock-alert-list > li, .transfer-confirm-footer, .transfer-expanded-value > p, .inventory-completion-actions, .catalog-detail-heading, .stock-history-footer) { border-color: var(--line); }
+:root[data-theme] :is(.page-intro h1, .management-intro h1, .section-intro h2, .group-heading h3, .module-card h4, .panel-heading h2, .dialog-heading h2, .profile-panel-heading h2, .stock-alert-heading h2, .inventory-overview h2, .transfer-section-heading h2, .audit-snapshot h3, .catalog-history-heading h3, .stock-detail-heading h2, .form-complete h2, .access-form-container > h1, .denied-panel h2) { color: var(--title); }
+:root[data-theme] :is(.catalog-name-cell > strong, .catalog-record-link, .catalog-quantity > strong, .catalog-value-grid strong, .catalog-details dd, .audit-values dd, .audit-event-meta dd, .profile-data dd, .readonly-field strong, .stock-alert-product > strong, .stock-product-summary h3, .inventory-metadata dd, .inventory-item-name > strong, .inventory-count-product > strong, .transfer-summary strong, .transfer-applied-filters dd, .transfer-download-bar strong, .workspace-message strong, .checkbox-field strong, .stock-barcode-result h3, .stock-detail-meta dd) { color: var(--text); }
+:root[data-theme] :is(.topbar-location, .topbar-person-text > strong, .form-field > label, .catalog-filters label, .user-filters label) { color: var(--text); }
+:root[data-theme] :is(.eyebrow, .page-intro h1 > span, .management-intro h1 > span, .section-intro h2 > span, .stock-alert-heading h2 > span) { color: var(--link); }
+:root[data-theme] :is(.page-intro > div > p:last-child, .management-intro > p:last-child, .section-intro > p, .group-heading p, .module-card > p, .module-card-detail, .workspace-message p, .page-footer, .breadcrumb-root, .topbar-person-text > span, .access-description, .access-invitation-note, .access-support-note, .access-footer, .access-copyright, .form-divider, .field-hint, .dialog-description, .profile-note, .profile-description, .profile-privacy-note, .profile-panel-heading p, .profile-data dt, .connection-state p, .denied-panel p, .checkbox-field > span > span) { color: var(--muted); }
+:root[data-theme] :is(.catalog-name-cell > span, .catalog-contact-cell > small, .catalog-description-cell, .catalog-sku, .catalog-readonly-label, .catalog-value-grid span, .catalog-details dt, .catalog-history-heading p, .catalog-loading, .catalog-pagination, .table-state, .table-state p, .management-footnote, .audit-filter-note, .audit-event-meta dt, .audit-values dt, .audit-value-empty, .audit-state, .audit-event-meta dd > small, .stock-financial-note, .stock-balance-note, .stock-operation-note, .stock-empty-note, .stock-detail-meta dt, .stock-product-meta) { color: var(--muted); }
+:root[data-theme] :is(.stock-alert-heading > div > p:last-child, .stock-alert-counter > span, .stock-alert-counter > small, .stock-alert-toolbar > label, .stock-alert-product > span, .stock-alert-product > small, .stock-alert-pagination, .stock-alert-footnote, .stock-alert-state, .inventory-notes, .inventory-metadata dt, .inventory-count-summary, .inventory-count-product > span, .inventory-count-product > small, .inventory-review-note, .inventory-footnote, .transfer-section-heading p:not(.eyebrow), .transfer-upload-form .form-field small, .transfer-reference-links, .transfer-summary span, .transfer-confirm-footer p, .transfer-report-submit > p, .transfer-applied-filters dt, .transfer-download-bar p, .transfer-import-table th[scope="row"], .transfer-advanced) { color: var(--muted); }
+:root[data-theme] :is(.text-link, .module-open-link, .stock-alert-open, .logout-button, .theme-control, .password-control > button, .transfer-reference-links a, .transfer-expanded-value summary span) { color: var(--link); }
+:root[data-theme] :is(.form-field input:not([type="checkbox"]):not([type="radio"]), .form-field select, .catalog-form textarea, .user-search input, .catalog-search > input, .catalog-filters select, .audit-search input, .audit-filters input, .audit-advanced input, .stock-alert-toolbar > select, .transfer-upload-form input[type="file"], .transfer-report-form .form-field select, .inventory-count-input input, .stock-barcode-form input, .notification-filters input, .notification-filters select) { background: var(--field); color: var(--ink); border-color: var(--soft-border); }
+:root[data-theme] :is(input, textarea)::placeholder { color: var(--muted); opacity: 1; }
+:root[data-theme] :is(input, textarea, select):focus { border-color: var(--focus); outline-color: var(--focus); }
+:root[data-theme] :is(a, button, input, textarea, select):focus-visible { outline-color: var(--focus); }
+:root[data-theme] :is(.form-field input:disabled, .form-field select:disabled, .catalog-form textarea:disabled) { background: var(--surface-soft); color: var(--muted); }
+:root[data-theme] :is(.button-primary, .primary-link) { background: var(--primary); border-color: var(--primary); color: var(--on-primary); }
+:root[data-theme] :is(.button-primary:hover, .primary-link:hover) { background: var(--primary-hover); border-color: var(--primary-hover); }
+:root[data-theme] :is(.button-secondary, .button-google) { background: var(--surface); border-color: var(--soft-border); color: var(--link); }
+:root[data-theme] :is(.button-secondary:hover, .button-google:hover, .catalog-table tbody tr:hover, .users-table tbody tr:hover, .icon-button:hover) { background: var(--surface-hover); }
+:root[data-theme] :is(.catalog-table th, .users-table th) { background: var(--surface-soft); color: var(--muted); border-color: var(--line); }
+:root[data-theme] :is(.catalog-table td, .users-table td) { color: var(--text); }
+:root[data-theme] :is(.catalog-tabs, .stock-tabs, .inventory-tabs) { background: var(--surface-soft); border-color: var(--line); }
+:root[data-theme] :is(.catalog-tabs a, .stock-tabs button, .transfer-tabs > button) { color: var(--muted); }
+:root[data-theme] :is(.catalog-tabs a:hover, .stock-tabs button:hover, .transfer-tabs > button:hover) { background: var(--surface-hover); color: var(--link); }
+:root[data-theme] :is(.catalog-tabs a[aria-current="page"], .stock-tabs button[aria-selected="true"], .transfer-tabs > button[aria-selected="true"]) { background: var(--surface); color: var(--link); border-color: var(--soft-border); }
+:root[data-theme] :is(.welcome-badge, .module-icon, .message-icon, .group-number, .card-status, .preparation-badge, .catalog-confirm-note, .catalog-value-grid > div, .audit-advanced, .audit-snapshot, .readonly-field, .transfer-summary > div, .transfer-download-bar, .transfer-advanced, .stock-alert-dashboard, .stock-alert-counter, .stock-product-summary, .stock-financial-card, .stock-barcode-result, .inventory-count-summary, .inventory-review-summary, .inventory-rebase-note, .dialog-heading .icon-button) { background: var(--surface-soft); border-color: var(--line); color: var(--text); }
+:root[data-theme] :is(.topbar-avatar, .role-badge, .google-profile-icon) { background: var(--surface-soft); color: var(--link); border-color: var(--soft-border); }
+:root[data-theme] :is(.closing-note, .closing-symbol, .catalog-prerequisite) { background: var(--surface-soft); border-color: var(--soft-border); color: var(--text); }
+:root[data-theme] :is(.closing-note p, .closing-note div > span, .closing-note > a) { color: var(--text); border-color: var(--soft-border); }
+:root[data-theme] :is(.hero-card, .visual-platform) { background: var(--surface-soft); border-color: var(--soft-border); }
+:root[data-theme] :is(.hero-copy h2, .hero-copy > p, .hero-eyebrow, .hero-copy h2 > span, .visual-caption) { color: var(--text); }
+:root[data-theme] .visual-label { background: var(--surface); color: var(--text); border-color: var(--line); }
+:root[data-theme] .visual-label > span { background: var(--surface-soft); color: var(--link); }
+:root[data-theme] .form-divider > span { background: var(--line); }
+:root[data-theme] :is(.user-dialog, .catalog-dialog)::backdrop { background: var(--scrim); }
+:root[data-theme] :is(.stock-alert-bell, .stock-alert-clear > svg, .stock-alert-clear > strong) { color: var(--positive); }
+:root[data-theme] .stock-alert-bell-count { background: var(--primary); color: var(--on-primary); border-color: var(--canvas); }
+:root[data-theme] .notification-bell-error { background: var(--primary); color: var(--on-primary); }
+:root[data-theme] :is(.stock-summary > div, .inventory-summary > div, .stock-product-picker, .stock-selected-product, .stock-history-relation, .count-badge, .user-initial) { background: var(--surface-soft); border-color: var(--line); color: var(--text); }
+:root[data-theme] :is(.stock-summary > div > strong, .inventory-summary > div > strong, .stock-selected-product strong, .stock-review-product > strong, .stock-detail-grid dd, .inventory-selection-list strong, .user-cell strong) { color: var(--text); }
+:root[data-theme] :is(.stock-summary > div > span, .stock-summary > div > small, .stock-summary-note, .stock-muted-block, .stock-picker-results small, .stock-picker-state, .stock-picker-pagination, .stock-selected-product span, .stock-review-product > span, .stock-detail-grid dt, .stock-operation-reference dd, .stock-detail-state, .inventory-summary > div > span, .inventory-summary small, .inventory-guidance, .inventory-completion-hint, .inventory-item-filter > label, .inventory-count-meta, .inventory-completion-actions p, .inventory-review-lines, .inventory-scope legend, .inventory-scope label, .inventory-category-selection label, .inventory-category-selection p, .inventory-selection > label, .inventory-selection-count, .inventory-picker-pages, .inventory-selection-list label, .inventory-selection-list small, .inventory-state, .user-cell > span > span, .google-status, .google-status span, .panel-heading p) { color: var(--muted); }
+:root[data-theme] :is(.catalog-filters input[type="date"], .stock-form select, .stock-product-picker > input, .inventory-item-filter > select, .inventory-count-input, .inventory-items-table textarea, .inventory-selection > input) { background: var(--field); color: var(--ink); border-color: var(--soft-border); }
+:root[data-theme] :is(.stock-picker-results > button, .stock-product-picker > label) { color: var(--text); border-color: var(--line); }
+:root[data-theme] .stock-picker-results > button:hover { background: var(--surface-hover); }
+:root[data-theme] :is(.inventory-category-selection, .inventory-selection-list, .inventory-selection-list label, .stock-filter-chip, .module-card-detail, .access-invitation-note, .form-complete, .logout-button) { border-color: var(--line); }
+:root[data-theme] .transfer-upload-form input[type="file"]::file-selector-button { background: var(--surface-soft); border-color: var(--line); color: var(--text); }
+
+/* Status colors remain distinct in both modes. */
+:root[data-theme] :is(.form-error, .transfer-summary .transfer-summary-error, .transfer-import-table tbody tr.transfer-row-error) { background: var(--danger-bg); border-color: var(--danger-line); color: var(--danger); }
+:root[data-theme] .transfer-import-table tbody tr.transfer-row-error:hover { background: var(--danger-bg); }
+:root[data-theme] :is(.form-error *, .transfer-summary-error strong, .transfer-row-errors, .transfer-row-errors strong, .stock-negative, .stock-delta-negative, .inventory-difference-negative) { color: var(--danger); }
+:root[data-theme] :is(.form-success, .card-status-ready, .catalog-status-active, .user-status-active, .inventory-status-completed, .complete-icon) { background: var(--success-bg); border-color: var(--success-line); color: var(--positive); }
+:root[data-theme] :is(.form-success *, .stock-normal, .transfer-valid, .stock-positive, .stock-delta-positive, .inventory-difference-positive) { color: var(--positive); }
+:root[data-theme] :is(.stock-empty, .stock-low, .stock-alert-level, .stock-alert-level-empty, .audit-snapshot-note, .transfer-report-warnings, .inventory-divergence, .stock-justification-note) { color: var(--warning); }
+:root[data-theme] :is(.stock-alert-counter-empty, .stock-alert-counter-low, .stock-alert-level > span, .stock-alert-level-empty > span, .stock-pending-message, .inventory-status-open, .inventory-status-canceled) { background: var(--warning-bg); border-color: var(--warning-line); color: var(--warning); }
+:root[data-theme] :is(.stock-alert-counter > strong, .stock-alert-counter-empty > strong, .stock-alert-counter-low > strong) { color: inherit; }
+:root[data-theme] :is(input[type="checkbox"], input[type="radio"]) { accent-color: var(--primary); }
+:root[data-theme] :is(.inventory-warning, .inventory-item-changed) { background: var(--warning-bg); color: var(--warning); border-color: var(--warning-line); }
+:root[data-theme] :is(.inventory-inactive, .inventory-changed-label, .inventory-cancel) { color: var(--warning); }
+:root[data-theme] :is(.inventory-unsaved, .status-active) { color: var(--positive); }
+:root[data-theme] .inventory-unsaved { background: var(--success-bg); border-color: var(--success-line); }
+:root[data-theme] .status-inactive { color: var(--muted); }
+/* Existing movement direction rules use !important; preserve their semantic
+   distinction while replacing the light-only palette. */
+:root[data-theme] .stock-increase { color: var(--positive) !important; }
+:root[data-theme] .stock-decrease { color: var(--danger) !important; }
+:root[data-theme] .stock-inactive-label { color: var(--warning) !important; }
+
+.appearance-panel { max-width: 1020px; padding: 28px; }
+.appearance-heading { display: flex; align-items: center; gap: 14px; margin-bottom: 28px; }
+.appearance-heading h2 { color: var(--title); font-size: 1.375rem; font-weight: 550; }
+.appearance-heading p { color: var(--muted); font-size: 0.875rem; line-height: 1.8; margin-top: 7px; }
+.appearance-state { color: var(--muted); font-size: 0.875rem; padding: 20px 0; }
+.theme-options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 0; margin: 0; padding: 0; gap: 16px; }
+.theme-options legend { padding: 0; margin-bottom: 16px; color: var(--text); font-size: 0.875rem; font-weight: 550; }
+.theme-option { position: relative; display: flex; flex-direction: column; gap: 12px; align-items: flex-start; padding: 19px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; cursor: pointer; }
+.theme-option > input { position: absolute; right: 15px; top: 16px; width: 16px; height: 16px; margin: 0; }
+.theme-option-selected { background: var(--surface-soft); border-color: var(--focus); box-shadow: inset 0 0 0 1px var(--focus); }
+.theme-option:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: 3px; }
+.theme-options:disabled .theme-option { cursor: default; opacity: .7; }
+.theme-option > strong { font-size: 0.9375rem; color: var(--title); font-weight: 550; }
+.theme-option-description { color: var(--muted); font-size: 0.8125rem; line-height: 1.9; }
+.theme-swatch { width: 86px; height: 58px; padding: 9px 9px 9px 26px; display: flex; flex-direction: column; gap: 5px; border: 1px solid #d2dfc6; border-radius: 7px; background: linear-gradient(to right, #233a2f 0 18px, #f6f7f3 18px); }
+.theme-swatch > span { display: block; height: 7px; background: #dce5d5; border-radius: 2px; }.theme-swatch > span:last-child { width: 65%; }
+.theme-swatch-dark { background: linear-gradient(to right, #233a2f 0 18px, #122019 18px); border-color: #506248; }.theme-swatch-dark > span { background: #4a6246; }
+.theme-swatch-system { background: linear-gradient(to right, #233a2f 0 18px, #f6f7f3 18px 51px, #122019 51px); }.theme-swatch-system > span { background: linear-gradient(to right, #dce5d5 0 50%, #4a6246 50%); }
+.appearance-note { color: var(--muted); font-size: 0.8125rem; line-height: 1.9; max-width: 760px; margin: 21px 0; }
+.appearance-actions { display: flex; align-items: center; justify-content: space-between; gap: 20px; border-top: 1px solid var(--line); padding-top: 23px; margin-top: 23px; }
+.appearance-actions > span { color: var(--muted); font-size: 0.8125rem; line-height: 1.8; }.appearance-actions .button-primary { white-space: nowrap; }
+.appearance-panel .form-message .text-link { display: inline-block; margin-top: 8px; }
+.theme-control { color: var(--link); flex-shrink: 0; }
+@media (max-width: 699px) {
+  .appearance-panel { padding: 20px; }.theme-options { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .theme-option { padding: 18px 43px 18px 118px; min-height: 106px; gap: 7px; }.theme-swatch { position: absolute; left: 17px; top: 20px; }
+  .appearance-actions { align-items: flex-start; flex-direction: column; }.appearance-actions .button-primary { align-self: flex-end; }
+}
+@media (forced-colors: active) { .theme-option-selected { border: 2px solid Highlight; }.theme-option:has(input:focus-visible) { outline-color: Highlight; } }
+
+@media (max-width: 699px) {
+  :root[data-theme] :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea) { font-size: 1.125rem; }
+}
