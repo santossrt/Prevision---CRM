@@ -2,6 +2,7 @@ import "server-only";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../../generated/prisma/client.ts";
 import { readEnvironment } from "../config/environment.ts";
+import { databaseConnectionOptions } from "./connection-options.ts";
 
 const databaseGlobal = globalThis as unknown as {
   previsionDatabase?: PrismaClient;
@@ -10,7 +11,7 @@ const databaseGlobal = globalThis as unknown as {
 
 function createDatabase(): PrismaClient {
   const environment = readEnvironment();
-  const adapter = new PrismaPg({ connectionString: environment.DATABASE_URL, max: 3, connectionTimeoutMillis: 5000, idleTimeoutMillis: 10000 });
+  const adapter = new PrismaPg({ ...databaseConnectionOptions(environment), max: 3, connectionTimeoutMillis: 5000, idleTimeoutMillis: 10000 });
   return new PrismaClient({ adapter });
 }
 

@@ -13,6 +13,7 @@ const environmentSchema = z.object({
   APP_ENV: z.enum(["development", "test", "demo"]),
   DATABASE_ID: z.string().min(1).max(100),
   DATABASE_URL: postgresUrl,
+  DATABASE_SSL_CA: z.string().min(1).max(32768).optional(),
   DIRECT_URL: postgresUrl.optional()
 });
 
