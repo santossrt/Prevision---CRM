@@ -8,6 +8,13 @@ A etapa 1 estabeleceu a aplicação Next.js, TypeScript, Tailwind CSS, Prisma e 
 
 O fluxo Google exige credenciais do provedor e autorização prévia por usuário. Neste ambiente de trabalho, a vinculação e o login com uma conta Google real foram confirmados pelo responsável e pelos registros de acesso no banco. Novas instalações precisam configurar suas próprias credenciais. O envio real de e-mails exige SMTP, ainda não configurado; o desenvolvimento utiliza uma caixa de mensagens local. Por decisão do responsável, a etapa 11 foi limitada aos testes funcionais, de segurança e recuperação. O preparo da demonstração pública ficou fora desse escopo; publicação e documentação final continuam previstas para a etapa 12. A ampliação de compatibilidade da câmera ficou adiada pelo responsável.
 
+## Publicação da demonstração
+
+A demonstração foi publicada em [prevision-iota.vercel.app](https://prevision-iota.vercel.app),
+com aplicação na Vercel e PostgreSQL no Supabase. O acesso exige uma conta autorizada.
+Consulte [a configuração e a validação da publicação](docs/deployment-vercel-supabase.md),
+incluindo TLS, credenciais privadas, SMTP e as pendências operacionais.
+
 ## Executar localmente
 
 Requisitos: Node.js 24.12 ou superior na linha 24, npm 11 e Docker Desktop com servidor Linux disponível. A configuração validada utiliza Node.js 24.22. Os scripts TypeScript usam o suporte nativo do Node. As permissões de instalação de Prisma e esbuild estão declaradas em `allowScripts` no `package.json`.

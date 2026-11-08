@@ -6,7 +6,8 @@ O projeto `prevision` foi criado na Vercel e vinculado ao repositório
 `santossrt/Prevision---CRM`, branch `main`. A configuração utiliza Next.js,
 Node.js 24, instalação com `npm ci` e build com `npm run build`.
 O endereço configurado em `AUTH_URL` é `https://prevision-iota.vercel.app`.
-O endereço atribuído não comprova que uma versão funcional já foi publicada.
+O primeiro deploy de produção do commit `7a9681d` foi concluído e promovido
+para esse endereço. As verificações HTTP descritas abaixo foram aprovadas.
 
 As variáveis iniciais são exclusivas de Production: `APP_ENV=demo`,
 `DATABASE_ID=prevision-demo`, `AUTH_URL`, `MAIL_TRANSPORT=smtp` e uma
@@ -79,10 +80,11 @@ Esse procedimento não importa os dados do desenvolvimento. Os comandos
 `db:deploy`, `db:identify` e `auth:bootstrap` existentes continuam restritos ao
 desenvolvimento local. Não devem ser usados para modificar o Supabase.
 
-## Pendências para a publicação funcional
+## Pendências operacionais
 
 - Definir a execução periódica de recuperação da fila e da retenção de prévias.
-- Publicar a versão atualizada e conferir login, autorização, estoque e arquivos.
+- Conferir os fluxos completos de convite/recuperação por e-mail e arquivos
+  exportados no ambiente publicado; o teste SMTP não cobre esses fluxos.
 
 Google OAuth permanece opcional e requer o callback do endereço publicado e
 autorização prévia de cada usuário. As credenciais locais não são copiadas.
@@ -106,5 +108,15 @@ e os [endereços SMTP oficiais](https://developers.google.com/workspace/gmail/im
   do módulo de TLS no código enviado.
 - Autenticação SMTP validada e mensagem de teste aceita pelo Gmail.
 
-Essas verificações precedem o deploy. Login HTTP, infraestrutura publicada e
-os fluxos de e-mail da aplicação precisam de validação no ambiente publicado.
+No primeiro deploy de produção, foram aprovados:
+
+- `/api/health` e a página `/login`: HTTP 200.
+- `/api/users` sem sessão: HTTP 401.
+- Login com o administrador configurado e cookie Secure/HttpOnly.
+- Consultas autenticadas de usuários, produtos, saldos e dashboard: HTTP 200.
+- Logout: HTTP 200; cópia da sessão anterior recusada com HTTP 401.
+
+As verificações publicadas não cadastraram produtos nem lançaram estoque.
+O teste de e-mail autorizado foi enviado diretamente pelo SMTP; convites,
+recuperação, arquivos exportados e a recuperação periódica da fila permanecem
+com validação operacional adicional pendente.
